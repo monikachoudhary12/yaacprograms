@@ -1,0 +1,52 @@
+%{
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+int yylex();
+void yyerror(const char *s);
+
+%}
+
+%union {
+    char *str;
+}
+
+%token <str> STRING
+
+%%
+
+input:
+    input STRING '\n' {
+        char *s = $2;
+        int len = strlen(s);
+        int is_palindrome = 1;
+
+        for (int i = 0; i < len / 2; i++) {
+            if (s[i] != s[len - i - 1]) {
+                is_palindrome = 0;
+                break;
+            }
+        }
+
+        if (is_palindrome)
+            printf("'%s' is a palindrome\n", s);
+        else
+            printf("'%s' is NOT a palindrome\n", s);
+
+        free(s);
+    }
+    |
+    ;
+
+%%
+
+void yyerror(const char *s) {
+    fprintf(stderr, "Error: %s\n", s);
+}
+
+int main() {
+    printf("Enter strings to check for palindrome (Ctrl+D to exit):\n");
+    yyparse();
+    return 0;
+}
