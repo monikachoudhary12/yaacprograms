@@ -1,0 +1,72 @@
+%{
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+void yyerror(const char *s);
+int yylex();
+%}
+
+%union {
+    char *str;
+}
+
+%token <str> NUMBER
+%left '+' '-'
+%left '*' '/'
+%right '^'
+%nonassoc UMINUS
+
+%type <str> expr
+
+%%
+
+input:
+    input expr '\n' { printf("Postfix: %s\n", $2); free($2); }
+    |
+    ;
+
+expr:
+    expr '+' expr   { 
+                        asprintf(&$$, "%s %s +", $1, $3);
+                        free($1); free($3);
+                    }
+  | expr '-' expr   {
+                        asprintf(&$$, "%s %s -", $1, $3);
+                        free($1); free($3);
+                    }
+  | expr '*' expr   {
+                        asprintf(&$$, "%s %s *", $1, $3);
+                        free($1); free($3);
+                    }
+  | expr '/' expr   {
+                        asprintf(&$$, "%s %s /", $1, $3);
+                        free($1); free($3);
+                    }
+  | expr '^' expr   {
+                        asprintf(&$$, "%s %s ^", $1, $3);
+                        free($1); free($3);
+                    }
+  | '-' expr %prec UMINUS {
+                        asprintf(&$$, "%s -", $2);
+                        free($2);
+                    }
+  | '(' expr ')'    {
+                        $$ = $2;
+                    }
+  | NUMBER          {
+                        $$ = strdup($1);
+                    }
+  ;
+
+%%
+
+void yyerror(const char *s) {
+    fprintf(stderr, "Error: %s\n", s);
+}
+
+int main() {
+    printf("Enter an infix expression (press Ctrl+D to end):\n");
+    yyparse();
+    return 0;
+}
